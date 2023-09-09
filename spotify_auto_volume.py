@@ -104,7 +104,9 @@ def run_flask():
 
 volume_queue = queue.Queue()
 
-def process_volume_adjustments(adjustment_value):
+def process_volume_adjustments():
+
+    global adjustment_value
 
     while True:
 
@@ -132,20 +134,14 @@ def on_press(key):
         #adjust volume by a larger inc. EX: double the usual amount
         if right_ctrl_pressed and key == keyboard.Key.up:
             adjust_spotify_volume_with_token('up', adjustment_value * 2)
-
-    if key == keyboard.Key.ctrl_r:
-        right_ctrl_pressed = True
-
-    if time.time() - last_adjustment_time < 0.5:
-        return
-
-    if right_ctrl_pressed and key == keyboard.Key.up:
-        volume_adjustments.append('up')
-        last_adjustment_time = time.time()
-
-    if right_ctrl_pressed and key == keyboard.Key.down:
-        volume_adjustments.append('down')
-        last_adjustment_time = time.time()
+        if right_ctrl_pressed and key == keyboard.Key.down:
+            adjust_spotify_volume_with_token('down', adjustment_value * 2)
+        click_timestamps = [] #clear timstamps
+    else:
+        if right_ctrl_pressed and key == keyboard.Key.up:
+            volume_adjustments.append('up')
+        if right_ctrl_pressed and key == keyboard.Key.down:
+            volume_adjustments.append('down')
 
 
 def on_release(key):

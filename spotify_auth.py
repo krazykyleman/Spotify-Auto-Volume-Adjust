@@ -80,5 +80,5 @@ def refresh_access_token():
 if __name__ == '__main__':
     # Setup the SQLite database before the app starts
     setup_database()
-    threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:8080/") ).start()
+    #threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:8080/") ).start()
     app.run(port=8080)
