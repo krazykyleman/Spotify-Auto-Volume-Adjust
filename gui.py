@@ -2,8 +2,9 @@ import eel
 import threading
 import time
 import webbrowser
+import spotify_auto_volume
 
-from spotify_auto_volume import adjust_spotify_volume_with_token, start_key_listener, process_volume_queue
+from spotify_auto_volume import start_key_listener, process_volume_adjustments
 from spotify_auth import setup_database, app
 
 # Initialize Eel
@@ -27,14 +28,14 @@ class App:
     @eel.expose
     def start(volume):
         try:
-            adjustment_value = int(volume) if volume else 10
+            spotify_auto_volume.adjustment_value = int(volume) if volume else 10
             print("Starting the volume controller...")
 
             # Start the key listener in a separate thread
             threading.Thread(target=start_key_listener, daemon=True).start()
 
             # Start the queue processor in a separate thread
-            threading.Thread(target=process_volume_queue, args=(adjustment_value,)).start()
+            threading.Thread(target=spotify_auto_volume.process_volume_adjustments).start()
 
         except ValueError:
             eel.show_error("Error", "Please enter a valid volume adjustment value!")  # JS function placeholder

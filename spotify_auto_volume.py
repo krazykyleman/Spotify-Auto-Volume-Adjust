@@ -13,6 +13,12 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
+#globals
+volume_adjustments = []
+click_timestamps = []
+
+adjustment_value = 10  # default value
+
 
 def adjust_volume_hourly():
     print("Hourly volume check and adjustment")
@@ -98,17 +104,17 @@ def run_flask():
 
 volume_queue = queue.Queue()
 
-def process_volume_queue(adjustment_value):
+def process_volume_adjustments(adjustment_value):
+
     while True:
-        direction = volume_queue.get()
-        print(f"Processing volume direction: {direction}")
 
-        if direction == "up":
-            adjust_spotify_volume_with_token('up', adjustment_value)
-        elif direction == "down":
-            adjust_spotify_volume_with_token('down', adjustment_value)
-        volume_queue.task_done()
+        if volume_adjustments:
+            
+            direction = volume_adjustments.pop(0)
+            print(f"Processing volume direction: {direction}")
 
+            adjust_spotify_volume_with_token(direction, adjustment_value)
+            time.sleep(1) # Ensure there's a delay between adjustments
 
 
 last_adjustment_time = 0
@@ -118,6 +124,15 @@ def on_press(key):
 
     global right_ctrl_pressed, last_adjustment_time
 
+    current_time = time.time()
+    click_timestamps.append(current_time)
+
+    #check for rapid clicks (3 clicks within 1 second)
+    if len(click_timestamps) >= 3 and (click_timestamps[-1] - click_timestamps[-3]) < 1:
+        #adjust volume by a larger inc. EX: double the usual amount
+        if right_ctrl_pressed and key == keyboard.Key.up:
+            adjust_spotify_volume_with_token('up', adjustment_value * 2)
+
     if key == keyboard.Key.ctrl_r:
         right_ctrl_pressed = True
 
@@ -125,11 +140,11 @@ def on_press(key):
         return
 
     if right_ctrl_pressed and key == keyboard.Key.up:
-        volume_queue.put('up')
+        volume_adjustments.append('up')
         last_adjustment_time = time.time()
 
     if right_ctrl_pressed and key == keyboard.Key.down:
-        volume_queue.put('down')
+        volume_adjustments.append('down')
         last_adjustment_time = time.time()
 
 
@@ -156,7 +171,7 @@ if __name__ == "__main__":
     flask_thread.start()
 
     # start volume queue in separate thread
-    volume_thread = threading.Thread(target=process_volume_queue)
+    volume_thread = threading.Thread(target=process_volume_adjustments)
     volume_thread.start()
 
     # start key listener in separate thread
