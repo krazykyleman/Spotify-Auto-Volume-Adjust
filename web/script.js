@@ -17,3 +17,25 @@ document.getElementById('volumeAdjustment').addEventListener('input', function()
         label.style.display = 'block';
     }
 });
+
+function authorizeSpotify() {
+    // Make an AJAX request to the Flask server to initiate authorization
+    fetch('http://127.0.0.1:8080/')
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from the Flask server
+            if (data.success) {
+                // If authorization is successful, redirect to the Spotify authorization URL
+                window.location.href = data.auth_url;
+            } else {
+                // Handle any errors or issues
+                alert('Authorization failed. Please try again.');
+            }
+        })
+        .catch(error => {
+            // Handle any network or request errors
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+}
+

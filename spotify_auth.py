@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, redirect
 from database_manager import setup_database, store_tokens, fetch_tokens
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -33,6 +33,9 @@ def index():
 
 @app.route('/callback')
 def callback():
+
+    print("Callback route triggered!")
+
     code = request.args.get('code')
 
     if not code:
@@ -56,7 +59,16 @@ def callback():
     # Store the tokens in the SQLite database
     store_tokens(access_token, refresh_token)
 
-    return "Tokens fetched and stored!"
+    return redirect('/success')
+
+@app.route('/success')
+def success():
+
+    print("Success route triggered!")
+
+    return """<html><body><script>
+              setTimeout(function() { window.close(); }, 3000);
+              </script>Authorization successful! This window will close in 3 seconds.</body></html>"""
 
 
 def refresh_access_token():

@@ -3,6 +3,7 @@ import threading
 import time
 import webbrowser
 import spotify_auto_volume
+import webview
 
 from spotify_auto_volume import start_key_listener
 from spotify_auth import setup_database, app
@@ -20,8 +21,9 @@ class App:
     @staticmethod
     @eel.expose
     def start_flask():
-        time.sleep(3)  # give a small delay for the server to start up
-        webbrowser.open("http://127.0.0.1:8080/")
+        time.sleep(1)  # give a small delay for the server to start up
+        webview.create_window('Spotify Authorization', 'http://127.0.0.1:8080/')
+
 
     @staticmethod
     @eel.expose
