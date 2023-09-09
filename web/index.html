@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Auto Volume</title>
+    <!-- Material Design CSS -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+    
+    <!-- Your custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="mdc-layout-grid">
+        <div class="mdc-layout-grid__inner">
+            <h1 class="mdc-typography--headline5">Spotify Auto Volume Controller</h1>
+            <button class="mdc-button mdc-button--raised" id="startButton">Start</button>
+            <div class="mdc-text-field mdc-text-field--outlined">
+                <input type="text" id="volumeAdjustment" class="mdc-text-field__input" value="10">
+                <div class="mdc-notched-outline">
+                    <div class="mdc-notched-outline__leading"></div>
+                    <div class="mdc-notched-outline__notch">
+                        <label for="volumeAdjustment" class="mdc-floating-label" id="my-label">Volume Adjustment</label>
+                    </div>
+                    <div class="mdc-notched-outline__trailing"></div>
+                </div>
+            </div>            
+            <button class="mdc-button mdc-button--raised" id="authButton">Authorize with Spotify</button>
+        </div>
+    </div>
+
+    <!-- Material Design JS -->
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <script>
+        mdc.autoInit();
+    </script>
+    <!-- Eel -->
+    <script type="text/javascript" src="/eel.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
