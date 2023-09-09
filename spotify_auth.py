@@ -24,6 +24,7 @@ scheduler.start()
 
 @app.route('/')
 def index():
+    print("Index route triggered!")
     auth_url = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope=user-modify-playback-state"
     webbrowser.open_new_tab(auth_url)  # directly open the Spotify authorization URL here
     return "Redirecting to Spotify for authorization..."

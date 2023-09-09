@@ -4,7 +4,7 @@ import time
 import webbrowser
 import spotify_auto_volume
 
-from spotify_auto_volume import start_key_listener, process_volume_adjustments
+from spotify_auto_volume import start_key_listener
 from spotify_auth import setup_database, app
 
 # Initialize Eel
@@ -20,8 +20,7 @@ class App:
     @staticmethod
     @eel.expose
     def start_flask():
-        threading.Thread(target=app.run, kwargs={'port': 8080}).start()
-        time.sleep(1)  # give a small delay for the server to start up
+        time.sleep(3)  # give a small delay for the server to start up
         webbrowser.open("http://127.0.0.1:8080/")
 
     @staticmethod
@@ -41,7 +40,7 @@ class App:
             eel.show_error("Error", "Please enter a valid volume adjustment value!")  # JS function placeholder
 
     def run(self):
-        eel.start('index.html', size=(600, 400), port=8080)
+        eel.start('index.html', size=(600, 400), port=8001)
 
 
 if __name__ == "__main__":
