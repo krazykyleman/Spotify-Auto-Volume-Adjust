@@ -105,9 +105,7 @@ def adjust_spotify_volume_with_token(direction, adjustment):
 
 
 def run_flask():
-    #logging.debug("Starting Flask...")
-    app.run(use_reloader=False)
-    #logging.debug("Flask started!")
+    app.run(use_reloader=False, port=8080)
 
 
 volume_queue = queue.Queue()
