@@ -4,6 +4,7 @@ import datetime
 import requests
 import threading
 import queue
+import logging
 
 from pynput import keyboard
 from spotify_auth import fetch_tokens, refresh_access_token
@@ -12,6 +13,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 
 app = Flask(__name__)
+
+#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 #globals
 volume_adjustments = []
@@ -36,6 +40,7 @@ def index():
 # Function to get the latest access token
 def get_latest_access_token():
     tokens = fetch_tokens()
+    #logging.debug("Fetching access token...")
     if not tokens:
         print("No tokens found in the database!")
         return None
@@ -66,7 +71,9 @@ def adjust_spotify_volume_with_token(direction, adjustment):
             headers = {
                 "Authorization": f"Bearer {access_token}"
             }
+            #logging.debug("Fetching current Spotify volume...")
             response = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
+            #logging.debug("Fetched current Spotify volume.")
             if response.status_code != 200:
                 print(f"Error after refreshing token: {response.text}")
                 return
@@ -98,8 +105,9 @@ def adjust_spotify_volume_with_token(direction, adjustment):
 
 
 def run_flask():
-
+    #logging.debug("Starting Flask...")
     app.run(use_reloader=False)
+    #logging.debug("Flask started!")
 
 
 volume_queue = queue.Queue()
@@ -111,12 +119,14 @@ def process_volume_adjustments():
     while True:
 
         if volume_adjustments:
+            #logging.debug("Processing volume adjustment from queue...")
             
             direction = volume_adjustments.pop(0)
             print(f"Processing volume direction: {direction}")
 
             adjust_spotify_volume_with_token(direction, adjustment_value)
             time.sleep(1) # Ensure there's a delay between adjustments
+            #logging.debug("Waiting before next volume adjustment...")
 
 
 last_adjustment_time = 0
@@ -124,29 +134,41 @@ right_ctrl_pressed = False
 
 def on_press(key):
 
-    global right_ctrl_pressed, last_adjustment_time
+    global right_ctrl_pressed, last_adjustment_time, click_timestamps
+
+    if key == keyboard.Key.ctrl_r:
+        right_ctrl_pressed = True
 
     current_time = time.time()
     click_timestamps.append(current_time)
 
     #check for rapid clicks (3 clicks within 1 second)
     if len(click_timestamps) >= 3 and (click_timestamps[-1] - click_timestamps[-3]) < 1:
+        print("Rapid click detected")
         #adjust volume by a larger inc. EX: double the usual amount
         if right_ctrl_pressed and key == keyboard.Key.up:
             adjust_spotify_volume_with_token('up', adjustment_value * 2)
         if right_ctrl_pressed and key == keyboard.Key.down:
             adjust_spotify_volume_with_token('down', adjustment_value * 2)
+
         click_timestamps = [] #clear timstamps
+        
+        return
+    
     else:
         if right_ctrl_pressed and key == keyboard.Key.up:
+            print("Adjust volume up detected")
             volume_adjustments.append('up')
         if right_ctrl_pressed and key == keyboard.Key.down:
+            print("Adjust volume down detected")
             volume_adjustments.append('down')
 
 
 def on_release(key):
 
     global right_ctrl_pressed, last_adjustment_time
+    
+    print(f"{key} key released")
 
     if key == keyboard.Key.ctrl_r:
         right_ctrl_pressed = False

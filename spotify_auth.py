@@ -1,11 +1,10 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, render_template
 from database_manager import setup_database, store_tokens, fetch_tokens
 from apscheduler.schedulers.background import BackgroundScheduler
+from flask import Flask, jsonify, request, redirect, session
+from database_manager import store_tokens, fetch_tokens
 
-import webbrowser
-import threading
 import requests
-import sqlite3
 
 
 app = Flask(__name__)
@@ -22,12 +21,12 @@ scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(auto_refresh_token, trigger="interval", seconds=3400)  # Refresh every 56 minutes (just under an hour)
 scheduler.start()
 
-@app.route('/')
-def index():
+@app.route('/authorize')
+def authorize():
     print("Index route triggered!")
     auth_url = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope=user-modify-playback-state"
-    webbrowser.open_new_tab(auth_url)  # directly open the Spotify authorization URL here
-    return "Redirecting to Spotify for authorization..."
+    #webbrowser.open_new_tab(auth_url)  # directly open the Spotify authorization URL here
+    return jsonify({"success": True, "auth_url": auth_url})
 
 
 
@@ -61,18 +60,33 @@ def callback():
 
     return redirect('/success')
 
+@app.route('/')
+def main_page():
+    return render_template('index.html')
+
 @app.route('/success')
 def success():
 
     print("Success route triggered!")
 
     return """<html><body><script>
-              setTimeout(function() { window.close(); }, 3000);
-              </script>Authorization successful! This window will close in 3 seconds.</body></html>"""
+            setTimeout(function() { window.close(); }, 3000);
+            </script>Authorization successful! This window will close in 3 seconds.</body></html>"""
+
+@app.route('/start', methods=['POST'])
+def start_volume_adjustment():
+    data = request.json
+    volume = data.get('volume')
+    
+    # Save the volume or any other needed data to a shared location
+    # (e.g., global variable, file, database) if needed
+    
+    return jsonify({"success": True, "message": "Ready to start volume adjustment."})
 
 
 def refresh_access_token():
     tokens = fetch_tokens()
+    #logging.debug("Refreshing access token...")
     if not tokens:
         return
 
@@ -94,4 +108,4 @@ if __name__ == '__main__':
     # Setup the SQLite database before the app starts
     setup_database()
     #threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:8080/") ).start()
-    app.run(port=8080)
+    app.run(port=8080, debug=True)
