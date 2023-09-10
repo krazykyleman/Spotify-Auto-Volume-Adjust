@@ -1,47 +1,69 @@
+import sys
 import threading
-import time
-import os
-import webview
-import spotify_auth  
-
-from spotify_auto_volume import start_key_listener, run_flask, process_volume_adjustments
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import QUrl
 from spotify_auth import setup_database, app
+from spotify_auto_volume import start_key_listener, run_flask, process_volume_adjustments
 
-# Global flag to signal when to start the listener
-should_start_listener = False
-
-class App:
+class SpotifyAutoVolumeApp(QWidget):
 
     def __init__(self):
+        super().__init__()
         setup_database()  # initializes database
+        self.initUI()
 
-    def run(self):
-        # Start Flask server in a separate thread
-        flask_thread = threading.Thread(target=self.run_flask)
-        flask_thread.start()
+    def initUI(self):
+        layout = QVBoxLayout()
 
-        current_path = os.path.dirname(os.path.abspath(__file__))
-        web_path = os.path.join(current_path, 'web')
-        webview.create_window('Spotify Auto Volume Controller', 'http://127.0.0.1:8080/', width=800, height=600)
+        # Title
+        self.title_label = QLabel('Spotify Auto Volume Controller', self)
+        layout.addWidget(self.title_label)
 
-        # Polling loop to check if we should start the listener
-        while True:
-            time.sleep(1)  # Check every second
-            if should_start_listener:
-                print("Starting key listener from GUI loop")
-                # Start volume queue in separate thread
-                volume_thread = threading.Thread(target=process_volume_adjustments)
-                volume_thread.start()
+        # Volume Adjustment Input
+        self.volume_adjustment = QLineEdit(self)
+        self.volume_adjustment.setPlaceholderText('Volume Adjustment')
+        layout.addWidget(self.volume_adjustment)
 
-                # start key listener in separate thread
-                key_listener_thread = threading.Thread(target=start_key_listener, daemon=True)
-                key_listener_thread.start()
-                break
+        # Start Button
+        self.start_btn = QPushButton('Start', self)
+        self.start_btn.clicked.connect(self.start_volume_controller)
+        layout.addWidget(self.start_btn)
 
-    @staticmethod
-    def run_flask():
-        app.run(port=8080)
+        # Authorize with Spotify Button
+        self.auth_btn = QPushButton('Authorize with Spotify', self)
+        self.auth_btn.clicked.connect(self.authorize_spotify)
+        layout.addWidget(self.auth_btn)
 
-if __name__ == "__main__":
-    app_instance = App()
-    app_instance.run()
+        # Status Message
+        self.status_message = QLabel('', self)
+        layout.addWidget(self.status_message)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Spotify Auto Volume Controller')
+        self.show()
+
+    def start_volume_controller(self):
+        # Logic to start the volume controller
+        volume = self.volume_adjustment.text()
+        # Start the key listener and volume adjustments
+        key_listener_thread = threading.Thread(target=start_key_listener, daemon=True)
+        key_listener_thread.start()
+        volume_thread = threading.Thread(target=process_volume_adjustments)
+        volume_thread.start()
+        self.status_message.setText('Volume controller started.')
+
+    def authorize_spotify(self):
+        # Logic to authorize with Spotify
+        self.browser = QWebEngineView()
+        self.browser.setUrl(QUrl('http://localhost:8080/authorize'))
+        self.browser.show()
+
+if __name__ == '__main__':
+    # Start Flask server in a separate thread
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.start()
+    
+    app = QApplication(sys.argv)
+    window = SpotifyAutoVolumeApp()
+    sys.exit(app.exec_())
