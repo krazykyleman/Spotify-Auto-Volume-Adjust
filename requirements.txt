@@ -46,3 +46,4 @@ Werkzeug==2.3.7
 wrapt==1.14.0
 zope.event==5.0
 zope.interface==6.0
+psycopg2==2.9.1
