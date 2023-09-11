@@ -16,7 +16,15 @@ def setup_database():
 def store_tokens(access_token, refresh_token):
     conn = sqlite3.connect('tokens.db')
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO tokens (access_token, refresh_token) VALUES (?, ?)", (access_token, refresh_token))
+    
+    cursor.execute("SELECT id FROM tokens LIMIT 1")
+    token_exists = cursor.fetchone()
+
+    if token_exists:
+        cursor.execute("UPDATE tokens SET access_token = ?, refresh_token = ? WHERE id = ?", (access_token, refresh_token, token_exists[0]))
+    else:
+        cursor.execute("INSERT INTO tokens (access_token, refresh_token) VALUES (?, ?)", (access_token, refresh_token))
+    
     conn.commit()
     conn.close()
 
