@@ -4,6 +4,7 @@ import datetime
 import requests
 import threading
 import queue
+import atexit
 
 from pynput import keyboard
 from spotify_auth import fetch_tokens, refresh_access_token
@@ -23,6 +24,7 @@ def adjust_volume_hourly():
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(adjust_volume_hourly, trigger="interval", hours=1, next_run_time=datetime.datetime.now() + datetime.timedelta(hours=1))
 scheduler.start()
+atexit.register(scheduler.shutdown)
 
 
 # Function to get the latest access token

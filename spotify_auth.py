@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request, redirect, session
 from database_manager import store_tokens, fetch_tokens
 
 import requests
-
+import atexit
 
 app = Flask('spotify_auth')
 
@@ -75,7 +75,6 @@ def start_volume_adjustment():
 
 def refresh_access_token():
     tokens = fetch_tokens()
-    #logging.debug("Refreshing access token...")
     if not tokens:
         return
 
@@ -92,6 +91,7 @@ def refresh_access_token():
     # Update the access token in the SQLite database
     store_tokens(token_response_data.get("access_token"), tokens['refresh_token'])
 
+atexit.register(scheduler.shutdown)
 
 if __name__ == '__main__':
     setup_database()
