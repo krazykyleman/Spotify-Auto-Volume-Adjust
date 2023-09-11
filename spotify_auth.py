@@ -6,12 +6,13 @@ from database_manager import store_tokens, fetch_tokens
 
 import requests
 import atexit
+import os
 
 app = Flask('spotify_auth')
 
-CLIENT_ID = '11f1598b050346ed8bd490975b11c9f5'
+CLIENT_ID = os.environ.get('CLIENT_ID')
 REDIRECT_URI = 'http://localhost:8080/callback'
-CLIENT_SECRET = 'c40a1001f76b486792d89b1dde6da902'
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 
 def auto_refresh_token():
     refresh_access_token()
@@ -95,4 +96,4 @@ atexit.register(scheduler.shutdown)
 
 if __name__ == '__main__':
     setup_database()
-    app.run(port=8080, debug=True)
+    app.run(host='0.0.0.0', port=os.environ.get('PORT', 8080), debug=True)
