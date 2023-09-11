@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLa
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 from spotify_auto_volume import start_key_listener, process_volume_adjustments
-from spotify_auto_volume import scheduler as volume_scheduler
 
 HEROKU_SERVER_URL = "https://spotifyautovolume-efd5d02c1318.herokuapp.com/"
 

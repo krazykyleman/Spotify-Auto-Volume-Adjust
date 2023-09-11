@@ -11,7 +11,7 @@ import os
 app = Flask('spotify_auth')
 
 CLIENT_ID = os.environ.get('CLIENT_ID')
-REDIRECT_URI = 'http://localhost:8080/callback'
+REDIRECT_URI = 'https://spotifyautovolume-efd5d02c1318.herokuapp.com/callback'
 CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 
 def auto_refresh_token():
