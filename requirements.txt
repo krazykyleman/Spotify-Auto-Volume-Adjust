@@ -2,7 +2,7 @@ absl-py==1.4.0
 APScheduler==3.10.4
 astunparse==1.6.3
 bidict==0.22.1
-blinker==1.6
+blinker==1.6.2
 bottle==0.12.25
 bottle-websocket==0.2.9
 cachetools==5.3.0
