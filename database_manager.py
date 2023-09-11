@@ -14,19 +14,23 @@ def setup_database():
     conn.close()
 
 def store_tokens(access_token, refresh_token):
-    conn = sqlite3.connect('tokens.db')
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT id FROM tokens LIMIT 1")
-    token_exists = cursor.fetchone()
+    try:
+        conn = sqlite3.connect('tokens.db')
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id FROM tokens LIMIT 1")
+        token_exists = cursor.fetchone()
 
-    if token_exists:
-        cursor.execute("UPDATE tokens SET access_token = ?, refresh_token = ? WHERE id = ?", (access_token, refresh_token, token_exists[0]))
-    else:
-        cursor.execute("INSERT INTO tokens (access_token, refresh_token) VALUES (?, ?)", (access_token, refresh_token))
-    
-    conn.commit()
-    conn.close()
+        if token_exists:
+            cursor.execute("UPDATE tokens SET access_token = ?, refresh_token = ? WHERE id = ?", (access_token, refresh_token, token_exists[0]))
+        else:
+            cursor.execute("INSERT INTO tokens (access_token, refresh_token) VALUES (?, ?)", (access_token, refresh_token))
+        
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+
 
 def fetch_tokens():
     conn = sqlite3.connect('tokens.db')
