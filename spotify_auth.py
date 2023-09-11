@@ -1,11 +1,11 @@
-from flask import Flask, request, redirect, render_template, jsonify, session
+from flask import Flask, request, redirect, jsonify, session, render_template
 from database_manager import setup_database, store_tokens, fetch_tokens
 from apscheduler.schedulers.background import BackgroundScheduler
-from database_manager import store_tokens, fetch_tokens
 
 import requests
 import atexit
 import os
+
 
 app = Flask('spotify_auth')
 
@@ -42,6 +42,10 @@ def callback():
         "client_secret": CLIENT_SECRET
     }
     response = requests.post(token_url, data=token_data)
+    
+    if response.status_code != 200:
+        return f"Error: Received status code {response.status_code} from Spotify."
+
     token_response_data = response.json()
     
     access_token = token_response_data.get("access_token")
