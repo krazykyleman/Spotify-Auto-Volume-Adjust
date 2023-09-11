@@ -1,7 +1,6 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, jsonify, session
 from database_manager import setup_database, store_tokens, fetch_tokens
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, jsonify, request, redirect, session
 from database_manager import store_tokens, fetch_tokens
 
 import requests
