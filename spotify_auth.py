@@ -73,6 +73,10 @@ def success():
             setTimeout(function() { window.close(); }, 3000);
             </script>Authorization successful! This window will close in 3 seconds.</body></html>"""
 
+@app.route('/')
+def index():
+    return "Server running. Volume adjusting in the background."
+
 @app.route('/start', methods=['POST'])
 def start_volume_adjustment():
     data = request.json
@@ -105,7 +109,7 @@ def refresh_access_token():
 
 
 if __name__ == '__main__':
+    
     # Setup the SQLite database before the app starts
     setup_database()
-    #threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:8080/") ).start()
     app.run(port=8080, debug=True)

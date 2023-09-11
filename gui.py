@@ -43,6 +43,9 @@ class SpotifyAutoVolumeApp(QWidget):
         self.setWindowTitle('Spotify Auto Volume Controller')
         self.show()
 
+    def run_flask():
+        app.run(use_reloader=False, port=8080)    
+
     def start_volume_controller(self):
         # Logic to start the volume controller
         volume = self.volume_adjustment.text()
@@ -60,6 +63,7 @@ class SpotifyAutoVolumeApp(QWidget):
         self.browser.show()
 
 if __name__ == '__main__':
+    
     # Start Flask server in a separate thread
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
