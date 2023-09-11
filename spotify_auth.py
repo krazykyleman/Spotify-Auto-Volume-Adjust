@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, jsonify, session, render_template
+from flask import Flask, request, redirect, jsonify
 from database_manager import setup_database, store_tokens, fetch_tokens
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -15,6 +15,20 @@ CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 
 def auto_refresh_token():
     refresh_access_token()
+
+@app.route('/refresh_token', methods=['GET'])
+def handle_refresh_token():
+    refresh_access_token()
+    tokens = fetch_tokens()
+    if tokens:
+        return jsonify({'access_token': tokens['access_token']})
+    else:
+        return jsonify({'error': 'Failed to refresh access token'}), 400
+
+@app.route('/get_tokens', methods=['GET'])
+def get_tokens():
+    tokens = fetch_tokens()
+    return jsonify(tokens)
 
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(auto_refresh_token, trigger="interval", seconds=3400)  # Refresh every 56 minutes (just under an hour)
@@ -80,7 +94,7 @@ def start_volume_adjustment():
 def refresh_access_token():
     tokens = fetch_tokens()
     if not tokens:
-        return
+        return None
 
     token_url = "https://accounts.spotify.com/api/token"
     token_data = {
@@ -94,6 +108,9 @@ def refresh_access_token():
     
     # Update the access token in the SQLite database
     store_tokens(token_response_data.get("access_token"), tokens['refresh_token'])
+
+    return token_response_data.get("access_token")
+
 
 atexit.register(scheduler.shutdown)
 
