@@ -1,11 +1,14 @@
-import sqlite3
+import psycopg2
+import os
+
+DATABASE_URL = os.environ['DATABASE_URL']
 
 def setup_database():
-    conn = sqlite3.connect('tokens.db')
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cursor = conn.cursor()
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS tokens (
-        id INTEGER PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         access_token TEXT NOT NULL,
         refresh_token TEXT NOT NULL
     );
@@ -14,14 +17,25 @@ def setup_database():
     conn.close()
 
 def store_tokens(access_token, refresh_token):
-    conn = sqlite3.connect('tokens.db')
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO tokens (access_token, refresh_token) VALUES (?, ?)", (access_token, refresh_token))
-    conn.commit()
-    conn.close()
+    try:
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id FROM tokens LIMIT 1")
+        token_exists = cursor.fetchone()
+
+        if token_exists:
+            cursor.execute("UPDATE tokens SET access_token = %s, refresh_token = %s WHERE id = %s", (access_token, refresh_token, token_exists[0]))
+        else:
+            cursor.execute("INSERT INTO tokens (access_token, refresh_token) VALUES (%s, %s)", (access_token, refresh_token))
+        
+        conn.commit()
+        conn.close()
+    except psycopg2.Error as e:
+        print(f"Database error: {e}")
 
 def fetch_tokens():
-    conn = sqlite3.connect('tokens.db')
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cursor = conn.cursor()
     cursor.execute("SELECT access_token, refresh_token FROM tokens ORDER BY id DESC LIMIT 1")
     tokens = cursor.fetchone()
