@@ -37,9 +37,7 @@ scheduler.start()
 @app.route('/authorize')
 def authorize():
     auth_url = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope=user-modify-playback-state"
-    return jsonify({"success": True, "auth_url": auth_url})
-
-
+    return redirect(auth_url)
 
 @app.route('/callback')
 def callback():
