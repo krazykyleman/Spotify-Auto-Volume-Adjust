@@ -3,10 +3,14 @@ import threading
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, QThread
 from spotify_auto_volume import start_key_listener, process_volume_adjustments
 
 HEROKU_SERVER_URL = "https://spotifyautovolume-efd5d02c1318.herokuapp.com/"
+
+class VolumeControllerThread(QThread):
+    def run(self):
+        start_key_listener()
 
 class SpotifyAutoVolumeApp(QWidget):
 
@@ -48,10 +52,8 @@ class SpotifyAutoVolumeApp(QWidget):
     def start_volume_controller(self):
         try:
             adjustment_value = int(self.volume_adjustment.text())
-            key_listener_thread = threading.Thread(target=start_key_listener, daemon=True)
-            key_listener_thread.start()
-            volume_thread = threading.Thread(target=process_volume_adjustments, args=(adjustment_value,))
-            volume_thread.start()
+            self.volume_thread = VolumeControllerThread()
+            self.volume_thread.start()
             self.status_message.setText('Volume controller started.')
         except ValueError:
             self.status_message.setText('Invalid volume adjustment value provided.')

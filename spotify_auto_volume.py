@@ -137,15 +137,16 @@ def process_volume_adjustments(custom_adjustment=None):
         except ValueError:
             print('Invalid custom adjustment value provided.')
     
-    # Instead of fetching tokens from the local database, fetch them from the server.
+    # Fetch tokens from the server.
     response = requests.get(f"{BASE_URL}/get_tokens")
     tokens = response.json()
 
     while True:
-        if volume_adjustments:
-            direction = volume_adjustments.pop(0)
-            adjust_spotify_volume_with_token(direction, adjustment_value, tokens)
-            time.sleep(1)
+        if not task_queue.empty():
+            task = task_queue.get()
+            direction, adjustment, tokens = task
+            adjust_spotify_volume_with_token(direction, adjustment, tokens)
+            time.sleep(2)  # Add a delay of 2 seconds between adjustments
 
 
 last_adjustment_time = 0
@@ -170,7 +171,6 @@ def volume_task_processor():
         volume_event.clear()  # Clear the event
 
 def on_press(key):
-    
     global right_ctrl_pressed
 
     # Check if the key is one of the relevant keys
@@ -183,18 +183,16 @@ def on_press(key):
     tokens = {"access_token": get_latest_access_token()}
     print(f"Fetched token: {tokens['access_token']}")
 
-
     if right_ctrl_pressed and key == keyboard.Key.up:
-
         print("Detected right control + up arrow key press.")
         task_queue.put(('up', adjustment_value, tokens))
         volume_event.set()
 
     elif right_ctrl_pressed and key == keyboard.Key.down:
-
         print("Detected right control + down arrow key press.")
         task_queue.put(('down', adjustment_value, tokens))
         volume_event.set()
+
 
 def on_release(key):
     global right_ctrl_pressed
