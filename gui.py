@@ -46,13 +46,16 @@ class SpotifyAutoVolumeApp(QWidget):
  
 
     def start_volume_controller(self):
+        try:
+            adjustment_value = int(self.volume_adjustment.text())
+            key_listener_thread = threading.Thread(target=start_key_listener, daemon=True)
+            key_listener_thread.start()
+            volume_thread = threading.Thread(target=process_volume_adjustments, args=(adjustment_value,))
+            volume_thread.start()
+            self.status_message.setText('Volume controller started.')
+        except ValueError:
+            self.status_message.setText('Invalid volume adjustment value provided.')
 
-        # Start the key listener and volume adjustments
-        key_listener_thread = threading.Thread(target=start_key_listener, daemon=True)
-        key_listener_thread.start()
-        volume_thread = threading.Thread(target=process_volume_adjustments, args=(self.volume_adjustment.text(),))
-        volume_thread.start()
-        self.status_message.setText('Volume controller started.')
 
     def authorize_spotify(self):
         # Open the Heroku server's authorization URL in the user's default browser

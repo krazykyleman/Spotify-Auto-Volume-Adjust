@@ -69,14 +69,21 @@ def adjust_spotify_volume_with_token(direction, adjustment, tokens, retries=3):
         return
 
     if response.status_code != 200:
+
         if 'The access token expired' in response.text or 'Permissions missing' in response.text:
+
             # Request the server to refresh the token
             response_refresh = requests.get(f"{BASE_URL}/refresh_token")
+
             if response_refresh.status_code != 200:
+
                 print(f"Error refreshing token via server: {response_refresh.text}")
                 return
+            
             tokens['access_token'] = response_refresh.json().get('access_token')
+
             if not tokens['access_token']:
+                
                 print("Failed to get refreshed access token.")
                 return
             
@@ -104,6 +111,8 @@ def adjust_spotify_volume_with_token(direction, adjustment, tokens, retries=3):
         new_volume = max(current_volume - adjustment, 0)
 
     response = requests.put(f"https://api.spotify.com/v1/me/player/volume?volume_percent={new_volume}", headers=headers)
+
+    print(f"API response for volume adjustment: {response.status_code}, {response.text}")
 
     if response.status_code == 429:  # Spotify's rate-limiting code
         if retries > 0:
@@ -143,39 +152,55 @@ last_adjustment_time = 0
 right_ctrl_pressed = False
 
 
+volume_event = threading.Event()
+
 def volume_task_processor():
+    print("Entered volume_task_processor.")
+
     while True:
+        print("Waiting for volume_event to be set.")
+        volume_event.wait()  # Wait for an event to be set
+        print("volume_event detected. Processing tasks.")
         task = task_queue.get()
-        if task:  # Check if a task exists
+        print(f"Processing task: {task}")
+        if task:
             direction, adjustment, tokens = task
             adjust_spotify_volume_with_token(direction, adjustment, tokens)
-            task_queue.task_done()  # Mark the task as done
-        time.sleep(0.1)  # Sleep for a short duration before checking the queue again
+            task_queue.task_done()
+        volume_event.clear()  # Clear the event
 
 def on_press(key):
+    
     global right_ctrl_pressed
+
+    # Check if the key is one of the relevant keys
+    if key not in [keyboard.Key.ctrl_r, keyboard.Key.up, keyboard.Key.down]:
+        return
 
     if key == keyboard.Key.ctrl_r:
         right_ctrl_pressed = True
 
-    # Fetch tokens once for this key press
     tokens = {"access_token": get_latest_access_token()}
+    print(f"Fetched token: {tokens['access_token']}")
 
-    # Add tasks to the task_queue
+
     if right_ctrl_pressed and key == keyboard.Key.up:
-        task_queue.put(('up', adjustment_value, tokens))
-    elif right_ctrl_pressed and key == keyboard.Key.down:
-        task_queue.put(('down', adjustment_value, tokens))
 
+        print("Detected right control + up arrow key press.")
+        task_queue.put(('up', adjustment_value, tokens))
+        volume_event.set()
+
+    elif right_ctrl_pressed and key == keyboard.Key.down:
+
+        print("Detected right control + down arrow key press.")
+        task_queue.put(('down', adjustment_value, tokens))
+        volume_event.set()
 
 def on_release(key):
-
-    global right_ctrl_pressed, last_adjustment_time
+    global right_ctrl_pressed
 
     if key == keyboard.Key.ctrl_r:
         right_ctrl_pressed = False
-
-    last_adjustment_time = 0
 
 
 def start_key_listener():
@@ -185,8 +210,8 @@ def start_key_listener():
 
 if __name__ == "__main__":
     # Start volume task processor in a separate thread
-    volume_task_processor_thread = threading.Thread(target=volume_task_processor, daemon=True)
-    volume_task_processor_thread.start()
+   # volume_task_processor_thread = threading.Thread(target=volume_task_processor, daemon=True)
+   # volume_task_processor_thread.start()
     
     # Start volume queue in separate thread
     volume_thread = threading.Thread(target=process_volume_adjustments)
@@ -195,6 +220,9 @@ if __name__ == "__main__":
     # Start key listener in separate thread
     key_listener_thread = threading.Thread(target=start_key_listener, daemon=True)
     key_listener_thread.start()
+
+    # Directly call the volume_task_processor
+    volume_task_processor()
 
     # Keep the main thread running
     while True:
