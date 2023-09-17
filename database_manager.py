@@ -1,10 +1,23 @@
 import psycopg2
 import os
 
+from psycopg2 import pool
+
+
 DATABASE_URL = os.environ['DATABASE_URL']
 
+# Create a connection pool
+db_pool = pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+
+def get_conn():
+    return db_pool.getconn()
+
+def release_conn(conn):
+    db_pool.putconn(conn)
+
 def setup_database():
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    conn = get_conn()
+
     cursor = conn.cursor()
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS tokens (
@@ -13,24 +26,21 @@ def setup_database():
         refresh_token TEXT NOT NULL
     );
     ''')
-    conn.commit()
     conn.close()
+    release_conn(conn)
 
 def store_tokens(access_token, refresh_token):
     try:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        conn = get_conn()
         cursor = conn.cursor()
         
-        cursor.execute("SELECT id FROM tokens LIMIT 1")
-        token_exists = cursor.fetchone()
-
-        if token_exists:
-            cursor.execute("UPDATE tokens SET access_token = %s, refresh_token = %s WHERE id = %s", (access_token, refresh_token, token_exists[0]))
-        else:
-            cursor.execute("INSERT INTO tokens (access_token, refresh_token) VALUES (%s, %s)", (access_token, refresh_token))
+        cursor.execute("""
+            INSERT INTO tokens (access_token, refresh_token) VALUES (%s, %s)
+            ON CONFLICT (id) DO UPDATE SET access_token = %s, refresh_token = %s
+        """, (access_token, refresh_token, access_token, refresh_token))
         
         conn.commit()
-        conn.close()
+        release_conn(conn)
     except psycopg2.Error as e:
         print(f"Database error: {e}")
 

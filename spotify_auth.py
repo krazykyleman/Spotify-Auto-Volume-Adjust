@@ -10,7 +10,7 @@ import os
 app = Flask('spotify_auth')
 
 CLIENT_ID = os.environ.get('CLIENT_ID')
-REDIRECT_URI = 'https://spotifyautovolume-efd5d02c1318.herokuapp.com/callback'
+REDIRECT_URI = os.environ.get('REDIRECT_URI')
 CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 
 def auto_refresh_token():
@@ -83,10 +83,26 @@ def start_volume_adjustment():
     data = request.json
     volume = data.get('volume')
     
-    # Save the volume or any other needed data to a shared location
-    # (e.g., global variable, file, database) if needed
+    # Get the access token from the database
+    tokens = fetch_tokens()
+    if not tokens:
+        return jsonify({"success": False, "message": "Failed to fetch access token."})
     
-    return jsonify({"success": True, "message": "Ready to start volume adjustment."})
+    access_token = tokens['access_token']
+    
+    # Spotify API endpoint to adjust volume
+    endpoint = f"https://api.spotify.com/v1/me/player/volume?volume_percent={volume}"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    response = requests.put(endpoint, headers=headers)
+    
+    if response.status_code == 204:  # 204 No Content means the request was successful
+        return jsonify({"success": True, "message": "Volume adjusted successfully."})
+    else:
+        return jsonify({"success": False, "message": f"Failed to adjust volume. Status code: {response.status_code}"})
 
 
 def refresh_access_token():
@@ -114,4 +130,4 @@ atexit.register(scheduler.shutdown)
 
 if __name__ == '__main__':
     setup_database()
-    app.run(host='0.0.0.0', port=os.environ.get('PORT', 8080), debug=True)
+    app.run(host='0.0.0.0', port=os.environ.get('PORT', 8080), debug=False)

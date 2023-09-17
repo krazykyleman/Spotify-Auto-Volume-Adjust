@@ -1,1 +1,1 @@
-web: python spotify_auth.py
+web: gunicorn spotify_auth:app
